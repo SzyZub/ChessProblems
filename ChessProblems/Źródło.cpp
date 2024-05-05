@@ -19,8 +19,6 @@ public:
     }
 };
 
-void DrawText(const char* text, int posX, int posY, int fontSize, Color color);
-
 int main(void)
 {
     InitWindow(1200, 900, "Chess problems");
