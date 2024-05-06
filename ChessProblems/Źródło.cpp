@@ -19,8 +19,12 @@ class MenuLogic {
 private:
     EnMenuFlags flag;
     int size, col, row;
+    int answer[64];
 public:
     MenuLogic() {
+        for (int i = 0; i < 64; i++) {
+            answer[i] = -1;
+        }
         size = 1;
         col = 1;
         row = 1;
@@ -113,12 +117,12 @@ public:
             }
         }
     }
-    void _generateKnight() {
+    bool _generateKnight() {
 
     }
     void _drawKnightAnswer() {
         Rectangle temp;
-        int x = 280, y = 50, side = 80;
+        int x = 600 - 40 * size, y = 50, side = 80;
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 if ((j + i) % 2) {
