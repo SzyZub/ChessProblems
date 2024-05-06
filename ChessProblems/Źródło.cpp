@@ -12,19 +12,108 @@ typedef struct StrMousePos {
 typedef enum EnMenuFlags {
     EMainMenu = 0,
     EKnightMenu,
-    EKnightAnswer
+    EKnightAnswer,
+    EExit
 } EnMenuFlags;
+
+class Generator {
+    int size, reCalc;
+    int answer[8][8];
+public:
+    Generator(){}
+    Generator(int s) : size(s) { 
+        reCalc = 0;
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                answer[i][j] = -2;
+            }
+        }
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                answer[i][j] = -1;
+            }
+        }
+    }
+    bool _check(int option, int &nx, int &ny, int startX, int startY) {
+        switch (option) {
+        case 0:
+            nx = startX + 2;
+            ny = startY + 1;
+            break;
+        case 1:
+            nx = startX + 1;
+            ny = startY + 2;
+            break;
+        case 2:
+            nx = startX - 1;
+            ny = startY + 2;
+            break;
+        case 3:
+            nx = startX - 2;
+            ny = startY + 1;
+            break;
+        case 4:
+            nx = startX - 2;
+            ny = startY - 1;
+            break;
+        case 5:
+            nx = startX - 1;
+            ny = startY - 2;
+            break;
+        case 6:
+            nx = startX + 1;
+            ny = startY - 2;
+            break;
+        case 7:
+            nx = startX + 2;
+            ny = startY - 1;
+            break;
+        }
+        if (ny < size && ny >= 0 && nx < size && nx >= 0 && answer[nx][ny] == -1) {
+            return true;
+        }
+        return false;
+    }
+    bool _generate(int count, int startX, int startY) {
+        answer[startX][startY] = count;
+        int nx, ny;
+        if (count == size * size) {
+            return true;
+        }
+        else {
+            for (int i = 0; i < 8; i++) {
+                if (_check(i, nx, ny, startX, startY) == true) {
+                    if (_generate(count + 1, nx, ny) == true) {
+                        if (reCalc == 1) {
+                            reCalc = 0;
+                        }
+                        else {
+                            return true;
+                        }
+                    }
+                }
+            }
+            answer[startX][startY] = -1;
+        }
+        return false;
+    }
+    void _printSolution()
+    {
+        for (int x = 0; x < size; x++) {
+            for (int y = 0; y < size; y++)
+                std::cout << answer[x][y] << '\t';
+            std::cout << std::endl;
+        }
+    }
+};
 
 class MenuLogic {
 private:
-    EnMenuFlags flag;
     int size, col, row;
-    int answer[64];
+    Generator gen;
 public:
+    EnMenuFlags flag;
     MenuLogic() {
-        for (int i = 0; i < 64; i++) {
-            answer[i] = -1;
-        }
         size = 1;
         col = 1;
         row = 1;
@@ -70,6 +159,7 @@ public:
             case 1:
                 break;
             case 2:
+                flag = EExit;
                 break;
             }
         }
@@ -94,31 +184,27 @@ public:
         DrawText("Number of the first row", (SCREEN_W - MeasureText("Number of the first row", FONTDEF)) / 2, 500 - FONTDEF / 2, FONTDEF, WHITE);       
         DrawRectangleLinesEx(temp, 6, GREEN);
         DrawRectangleLinesEx(temp, 6, GREEN);
-        temp.width = 300;
-        temp.x = 450;
+        temp.width = 900;
+        temp.x = 150;
         temp.y = 750;
-        if (info[0] < info[1] || info[0] < info[2]) {
-            DrawRectangleLinesEx(temp, 6, RED);
-        }
-        else {
-            DrawRectangleLinesEx(temp, 6, WHITE);
-        }
-        DrawText("Generate", (SCREEN_W - MeasureText("Generate", FONTDEF)) / 2, 744 + FONTDEF / 2, FONTDEF, WHITE);
+        DrawRectangleLinesEx(temp, 6, (info[0] < info[1] || info[0] < info[2]) ? RED : WHITE);
+        DrawText("Proceed to generation menu", (SCREEN_W - MeasureText("Proceed to generation menu", FONTDEF)) / 2, 744 + FONTDEF / 2, FONTDEF, WHITE);
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             StrMousePos temp = _getMousePos();
-            if (temp.y >= 156 && temp.y <= 656) {
-                info[(temp.y - 156) / 200] = (temp.x - 106) / 100;
+            if (((temp.y >= 150 && temp.y <= 250) || (temp.y >= 350 && temp.y <= 450) || (temp.y >= 550 && temp.y <= 650)) && temp.x >= 200 && temp.x <= 1000) {
+                info[(temp.y - 150) / 200] = (temp.x - 100) / 100;
             }
             else if (temp.y >= 750 && temp.y <= 850 && temp.x >= 450 && temp.x <= 750 && info[0] >= info[1] && info[0] >= info[2]) {
                 size = info[0];
                 col = info[1];
                 row = info[2];
+                gen = Generator(size);
+                int x = row - 1, y = col - 1;
+                gen._generate(1, x, y);
+                gen._printSolution();
                 flag = EKnightAnswer;
             }
         }
-    }
-    bool _generateKnight() {
-
     }
     void _drawKnightAnswer() {
         Rectangle temp;
@@ -146,8 +232,10 @@ public:
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             StrMousePos temp = _getMousePos();
             if (temp.y >= 744 && temp.y <= 856) {
-                if (temp.x >= 44 && temp.x <= 556) {
-                    
+                if (temp.x >= 44 && temp.x <= 556) { 
+                    int x = row - 1, y = col - 1;
+                    gen._generate(1, x, y);
+                    gen._printSolution();
                 }
                 else if (temp.x >= 744 && temp.x <= 1056) {
                     flag = EMainMenu;
@@ -165,6 +253,9 @@ int main(void)
     while (!WindowShouldClose())
     {
         menu._drawChoice();
+        if (menu.flag == EExit) {
+            return 0;
+        }
     }
     CloseWindow();
     return 0;
