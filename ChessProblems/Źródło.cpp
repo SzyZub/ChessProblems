@@ -17,10 +17,11 @@ typedef enum EnMenuFlags {
 } EnMenuFlags;
 
 class Generator {
+public:
     int size, reCalc;
     int answer[8][8];
-public:
-    Generator(){}
+    int moves[63];
+    Generator() {}
     Generator(int s) : size(s) { 
         reCalc = 0;
         for (int i = 0; i < 8; i++) {
@@ -33,6 +34,10 @@ public:
                 answer[i][j] = -1;
             }
         }
+        for (int i = 0; i < 63; i++) 
+            moves[i] = -2;
+        for (int i = 0; i < size * size - 1; i++)
+            moves[i] = -1;
     }
     bool _check(int option, int &nx, int &ny, int startX, int startY) {
         switch (option) {
@@ -74,28 +79,99 @@ public:
         }
         return false;
     }
-    bool _generate(int count, int startX, int startY) {
+    bool _generate(int startX, int startY) {
+        int count = 1;
         answer[startX][startY] = count;
-        int nx, ny;
-        if (count == size * size) {
-            return true;
-        }
-        else {
-            for (int i = 0; i < 8; i++) {
-                if (_check(i, nx, ny, startX, startY) == true) {
-                    if (_generate(count + 1, nx, ny) == true) {
-                        if (reCalc == 1) {
-                            reCalc = 0;
-                        }
-                        else {
-                            return true;
-                        }
+        int nx, ny, i = 0, j = 0;
+        if (reCalc == 1) {
+            i = size * size - 2;
+            for (int x = 0; x < size; x++) {
+                for (int y = 0; y < size; y++) {
+                    if (answer[x][y] == size*size) {
+                        answer[x][y] = -1;
+                        startX = x;
+                        startY = y;
+                        _calcPrev(startX, startY, i);
+                        nx = startX;
+                        ny = startY;
                     }
                 }
             }
-            answer[startX][startY] = -1;
+            j = moves[size * size - 2] + 1;
+            moves[size * size - 2] = -1;
+            count = size * size - 1;
+            reCalc = 0;
+        }
+        while (i < size * size - 1) {
+            if (j >= 8) {
+                answer[startX][startY] = -1;
+                count--;
+                i--;
+                if (i == -1) {
+                    return false;
+                }
+                _calcPrev(startX, startY, i);
+                nx = startX;
+                ny = startY;
+                j = moves[i] + 1;
+                moves[i] = -1;
+            }
+            while (j < 8) {
+                if (_check(j, nx, ny, startX, startY)) {
+                    count++;
+                    answer[nx][ny] = count;
+                    moves[i] = j;
+                    if (count == size * size) {
+                        return true;
+                    }
+                    break;
+                }
+                j++;
+            }
+            if (j != 8){
+                startX = nx;
+                startY = ny;
+                i++;
+                j = 0;
+            }           
         }
         return false;
+    }
+    void _calcPrev(int& startX, int& startY, int count) {
+        switch (moves[count]) {
+        case 0:
+            startX = startX - 2;
+            startY = startY - 1;
+            break;
+        case 1:
+            startX = startX - 1;
+            startY = startY - 2;
+            break;
+        case 2:
+            startX = startX + 1;
+            startY = startY - 2;
+            break;
+        case 3:
+            startX = startX + 2;
+            startY = startY - 1;
+            break;
+        case 4:
+            startX = startX + 2;
+            startY = startY + 1;
+            break;
+        case 5:
+            startX = startX + 1;
+            startY = startY + 2;
+            break;
+        case 6:
+            startX = startX - 1;
+            startY = startY + 2;
+            break;
+        case 7:
+            startX = startX - 2;
+            startY = startY + 1;
+            break;
+        }
     }
     void _printSolution()
     {
@@ -200,7 +276,7 @@ public:
                 row = info[2];
                 gen = Generator(size);
                 int x = row - 1, y = col - 1;
-                gen._generate(1, x, y);
+                gen._generate(x, y);
                 gen._printSolution();
                 flag = EKnightAnswer;
             }
@@ -234,7 +310,8 @@ public:
             if (temp.y >= 744 && temp.y <= 856) {
                 if (temp.x >= 44 && temp.x <= 556) { 
                     int x = row - 1, y = col - 1;
-                    gen._generate(1, x, y);
+                    gen.reCalc = 1;
+                    gen._generate(x, y);
                     gen._printSolution();
                 }
                 else if (temp.x >= 744 && temp.x <= 1056) {
