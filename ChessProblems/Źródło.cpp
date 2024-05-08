@@ -12,17 +12,19 @@ typedef struct StrMousePos {
 typedef enum EnMenuFlags {
     EMainMenu = 0,
     EKnightMenu,
+    EQueenMenu,
     EKnightAnswer,
+    EQueenAnswer,
     EExit
 } EnMenuFlags;
 
-class Generator {
+class GeneratorK {
 public:
-    int size, reCalc;
+    int size, reCalc, gened;
     int answer[8][8];
     int moves[63];
-    Generator() {}
-    Generator(int s) : size(s) { 
+    GeneratorK() {}
+    GeneratorK(int s) : size(s) { 
         reCalc = 0;
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
@@ -79,10 +81,14 @@ public:
         }
         return false;
     }
-    bool _generate(int startX, int startY) {
+    void _generate(int startX, int startY) {
         int count = 1;
         answer[startX][startY] = count;
         int nx, ny, i = 0, j = 0;
+        if (size == 1) {
+            gened = 1;
+            return;
+        }
         if (reCalc == 1) {
             i = size * size - 2;
             for (int x = 0; x < size; x++) {
@@ -108,7 +114,8 @@ public:
                 count--;
                 i--;
                 if (i == -1) {
-                    return false;
+                    gened = 0;
+                    return;
                 }
                 _calcPrev(startX, startY, i);
                 nx = startX;
@@ -122,7 +129,8 @@ public:
                     answer[nx][ny] = count;
                     moves[i] = j;
                     if (count == size * size) {
-                        return true;
+                        gened = 1;
+                        return;
                     }
                     break;
                 }
@@ -135,7 +143,8 @@ public:
                 j = 0;
             }           
         }
-        return false;
+        gened = 0;
+        return;
     }
     void _calcPrev(int& startX, int& startY, int count) {
         switch (moves[count]) {
@@ -173,20 +182,133 @@ public:
             break;
         }
     }
-    void _printSolution()
-    {
-        for (int x = 0; x < size; x++) {
-            for (int y = 0; y < size; y++)
-                std::cout << answer[x][y] << '\t';
+};
+
+class GeneratorQ {
+public:
+    int size, reCalc, gened;
+    int answer[8][8];
+    int moves[64];
+    GeneratorQ() {}
+    GeneratorQ(int s) : size(s) {
+        reCalc = 0;
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                answer[i][j] = -2;
+            }
+        }
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                answer[i][j] = -1;
+            }
+        }
+    }
+    void _generate(int startX, int startY) {
+        _fill(0, 0, 1);
+        _fill(1, 3, 2);
+        _remove(1, 3, 3);
+        return;
+    }
+    void _fill(int nx, int ny, int count) {
+        answer[ny][nx] = answer[ny][nx] + size + count;
+        for (int i = 0; i < size; i++) {
+            answer[ny][i]++;
+            answer[i][nx]++;
+        }
+        for (int i = 0; ny + i != size && nx + i != size; i++) {
+            answer[ny + i][nx + i]++;
+        }
+        for (int i = 0; ny + i != size && nx - i != -1; i++) {
+            answer[ny + i][nx - i]++;
+        }
+        for (int i = 0; ny - i != -1 && nx + i != size; i++) {
+            answer[ny - i][nx + i]++;
+        }
+        for (int i = 0; ny - i != -1 && nx - i != -1; i++) {
+            answer[ny - i][nx - i]++;
+        }
+    }
+    void _remove(int nx, int ny, int count) {
+        answer[ny][nx] = answer[ny][nx] - size - count + 1;
+        for (int i = 0; i < size; i++) {
+            answer[ny][i]--;
+            answer[i][nx]--;
+        }
+        for (int i = 0; ny + i != size && nx + i != size; i++) {
+            answer[ny + i][nx + i]--;
+        }
+        for (int i = 0; ny + i != size && nx - i != -1; i++) {
+            answer[ny + i][nx - i]--;
+        }
+        for (int i = 0; ny - i != -1 && nx + i != size; i++) {
+            answer[ny - i][nx + i]--;
+        }
+        for (int i = 0; ny - i != -1 && nx - i != -1; i++) {
+            answer[ny - i][nx - i]--;
+        }
+    }
+    void _printSol() {
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                std::cout << answer[i][j] << "\t";
+            }
             std::cout << std::endl;
         }
     }
 };
 
+/*
+int count = 1;
+        answer[startY][startX] = count;
+        int i = startY, j = startX;
+        if (size == 1) {
+            gened = 1;
+            return;
+        }
+        while (i >= 0) {
+            std::cout << "0" << std::endl;
+            while (j < size) {
+                std::cout << size << std::endl;
+                if (answer[i][j] == -1) {
+                    _fill(j, i, count);
+                    count++;
+                    startX = j;
+                    startY = i;
+                    if (count == size) {
+                        gened = 1;
+                        return;
+                    }
+                    break;
+                }
+                else {
+                    j++;
+                }
+            }
+            if (j == size) {
+                _remove(startX, startY, count);
+                i = startY;
+                j = startX + 1;
+                startY--;
+                for (int w = 0; w < size; w++) {
+                    if (answer[startY][w] >= size) {
+                        startX = w;
+                        break;
+                    }
+                }
+            }
+            else {
+                i++;
+                j = 0;
+            }
+        }
+        gened = 0;
+*/
+
 class MenuLogic {
 private:
     int size, col, row;
-    Generator gen;
+    GeneratorK genK;
+    GeneratorQ genQ;
 public:
     EnMenuFlags flag;
     MenuLogic() {
@@ -210,10 +332,16 @@ public:
             _drawMainMenu();
             break;
         case EKnightMenu:
-            _drawKnightMenu();
+            _drawMenu(0);
+            break;
+        case EQueenMenu:
+            _drawMenu(1);
             break;
         case EKnightAnswer:
             _drawKnightAnswer();
+            break;
+        case EQueenAnswer:
+            //_drawQueenAnswer();
             break;
         }
         ClearBackground(BLACK);
@@ -233,6 +361,7 @@ public:
                 flag = EKnightMenu;
                 break;
             case 1:
+                flag = EQueenMenu;
                 break;
             case 2:
                 flag = EExit;
@@ -240,7 +369,7 @@ public:
             }
         }
     }
-    void _drawKnightMenu() {
+    void _drawMenu(int choice) {
         Rectangle temp;
         static int info[] = { size, col, row };
         temp.width = 103;
@@ -274,32 +403,52 @@ public:
                 size = info[0];
                 col = info[1];
                 row = info[2];
-                gen = Generator(size);
-                int x = row - 1, y = col - 1;
-                gen._generate(x, y);
-                gen._printSolution();
-                flag = EKnightAnswer;
+                if (choice == 0) {
+                    _drawMenuK();
+                }
+                else {
+                    _drawMenuQ();
+                }
             }
         }
+    }
+    void _drawMenuK() {
+        genK = GeneratorK(size);
+        int x = row - 1, y = col - 1;
+        genK._generate(x, y);
+        flag = EKnightAnswer;
+    }
+    void _drawMenuQ() {
+        genQ = GeneratorQ(size);
+        int x = row - 1, y = col - 1;
+        genQ._generate(x, y);
+        genQ._printSol();
+        flag = EQueenAnswer;
     }
     void _drawKnightAnswer() {
         Rectangle temp;
         int x = 600 - 40 * size, y = 50, side = 80;
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                if ((j + i) % 2) {
-                    DrawRectangle(x + 80 * j, y + 80 * i, side, side, WHITE);
-                }
-                else {
-                    DrawRectangle(x + 80 * j, y + 80 * i, side, side, BLUE);
+        if (genK.gened == 1) {
+            for (int i = 0; i < size; i++) {
+                for (int j = 0; j < size; j++) {
+                    if ((j + i) % 2) {
+                        DrawRectangle(x + 80 * j, y + 80 * i, side, side, WHITE);
+                    }
+                    else {
+                        DrawRectangle(x + 80 * j, y + 80 * i, side, side, BLUE);
+                    }
+                    DrawText(TextFormat("%d", genK.answer[j][i]),  x + 80 * j + (80 - MeasureText(TextFormat("%d", genK.answer[j][i]), FONTDEF)) / 2,    y + 80 * i + (80 - FONTDEF) / 2, FONTDEF, BLACK);
                 }
             }
+        }
+        else {
+            DrawText("Answer doesn't exist", (SCREEN_W - MeasureText("Answer doesn't exist", FONTDEF)) / 2, SCREEN_H / 2 - FONTDEF, FONTDEF, WHITE);
         }
         temp.y = 750;
         temp.height = 100;
         temp.x = 50;
         temp.width = 500;
-        DrawRectangleLinesEx(temp, 6, WHITE);
+        DrawRectangleLinesEx(temp, 6, genK.gened ? WHITE : RED);
         DrawText("Generate next", temp.x + temp.width / 2 - MeasureText("Generate next", FONTDEF) / 2, temp.y - 6 + FONTDEF / 2, FONTDEF, WHITE);
         temp.x = 750;
         temp.width = 300;
@@ -308,11 +457,55 @@ public:
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             StrMousePos temp = _getMousePos();
             if (temp.y >= 744 && temp.y <= 856) {
-                if (temp.x >= 44 && temp.x <= 556) { 
+                if (temp.x >= 44 && temp.x <= 556 && genK.gened == 1) {
                     int x = row - 1, y = col - 1;
-                    gen.reCalc = 1;
-                    gen._generate(x, y);
-                    gen._printSolution();
+                    genK.reCalc = 1;
+                    genK._generate(x, y);
+                }
+                else if (temp.x >= 744 && temp.x <= 1056) {
+                    flag = EMainMenu;
+                }
+            }
+        }
+    }
+    void _drawQueenAnswer() {
+        Rectangle temp;
+        int x = 600 - 40 * size, y = 50, side = 80;
+        if (genQ.gened == 1) {
+            for (int i = 0; i < size; i++) {
+                for (int j = 0; j < size; j++) {
+                    if ((j + i) % 2) {
+                        DrawRectangle(x + 80 * j, y + 80 * i, side, side, WHITE);
+                    }
+                    else {
+                        DrawRectangle(x + 80 * j, y + 80 * i, side, side, BLUE);
+                    }
+                    if (genQ.answer[j][i] < size) {
+                        DrawText("Q", x + 80 * j + (80 - MeasureText("Q", FONTDEF)) / 2, y + 80 * i + (80 - FONTDEF) / 2, FONTDEF, BLACK);
+                    }     
+                }
+            }
+        }
+        else {
+            DrawText("Answer doesn't exist", (SCREEN_W - MeasureText("Answer doesn't exist", FONTDEF)) / 2, SCREEN_H / 2 - FONTDEF, FONTDEF, WHITE);
+        }
+        temp.y = 750;
+        temp.height = 100;
+        temp.x = 50;
+        temp.width = 500;
+        DrawRectangleLinesEx(temp, 6, genQ.gened ? WHITE : RED);
+        DrawText("Generate next", temp.x + temp.width / 2 - MeasureText("Generate next", FONTDEF) / 2, temp.y - 6 + FONTDEF / 2, FONTDEF, WHITE);
+        temp.x = 750;
+        temp.width = 300;
+        DrawRectangleLinesEx(temp, 6, WHITE);
+        DrawText("Menu", temp.x + temp.width / 2 - MeasureText("Menu", FONTDEF) / 2, temp.y - 6 + FONTDEF / 2, FONTDEF, WHITE);
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            StrMousePos temp = _getMousePos();
+            if (temp.y >= 744 && temp.y <= 856) {
+                if (temp.x >= 44 && temp.x <= 556 && genQ.gened == 1) {
+                    int x = row - 1, y = col - 1;
+                    genQ.reCalc = 1;
+                    genQ._generate(x, y);
                 }
                 else if (temp.x >= 744 && temp.x <= 1056) {
                     flag = EMainMenu;
