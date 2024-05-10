@@ -188,7 +188,6 @@ class GeneratorQ {
 public:
     int size, reCalc, gened;
     int answer[8][8];
-    int moves[64];
     GeneratorQ() {}
     GeneratorQ(int s) : size(s) {
         reCalc = 0;
@@ -204,12 +203,74 @@ public:
         }
     }
     void _generate(int startX, int startY) {
-        _fill(0, 0, 1);
-        _fill(1, 3, 2);
-        _remove(1, 3, 3);
-        return;
+        int count, i, j, broken = 0;
+        if (size == 1) {
+            gened = 1;
+            return;
+        }
+        if (reCalc == 1) {
+            count = size + 1;
+            int temp = (startY - 1) % size;
+            if (temp == -1) {
+                temp = size - 1;
+            }
+            for (int x = 0; x < size; x++) {
+                if (answer[temp][x] >= size) {
+                    _remove(x, temp, count);
+                    j = x + 1;
+                    i = temp;
+                    }
+            }
+            reCalc = 0;
+        }
+        else {
+            count = 1;
+            _fill(startX, startY, count);
+            i = (startY + 1) % size;
+            j = 0;
+        }
+        while(1) {
+            while(1) {
+                std::cout << i << " " << j << std::endl;
+                _printSol();
+                if (answer[i][j] == -1) {
+                    _fill(j, i, count);
+                    if (count == size + 1) {
+                        gened = 1;
+                        return;
+                    }
+                    j = 0;
+                    i = (i + 1) % size;
+                    break;
+                }
+                else if (j >= size - 1) {
+                    for (int b = 0; b < size; b++) {
+                        if (answer[i - 1 >= 0 ? i - 1 : size - 1][b] >= size) {
+                            _remove(b, i - 1, count);                         
+                            if (count == 1) {
+                                gened = 0;
+                                return;
+                            }
+                            j = b + 1;
+                            i = (i - 1) % size;
+                            if (i == -1) {
+                                i = size - 1;
+                            }
+                            broken = 1;
+                            break;
+                        }
+                    }
+                }
+                if (!broken) {
+                    j++;
+                }
+                else {
+                    broken = 0;
+                }
+            }
+        }
     }
-    void _fill(int nx, int ny, int count) {
+    void _fill(int nx, int ny, int &count) {
         answer[ny][nx] = answer[ny][nx] + size + count;
         for (int i = 0; i < size; i++) {
             answer[ny][i]++;
@@ -227,8 +288,9 @@ public:
         for (int i = 0; ny - i != -1 && nx - i != -1; i++) {
             answer[ny - i][nx - i]++;
         }
+        count++;
     }
-    void _remove(int nx, int ny, int count) {
+    void _remove(int nx, int ny, int& count) {
         answer[ny][nx] = answer[ny][nx] - size - count + 1;
         for (int i = 0; i < size; i++) {
             answer[ny][i]--;
@@ -246,6 +308,7 @@ public:
         for (int i = 0; ny - i != -1 && nx - i != -1; i++) {
             answer[ny - i][nx - i]--;
         }
+        count--;
     }
     void _printSol() {
         for (int i = 0; i < size; i++) {
@@ -256,53 +319,6 @@ public:
         }
     }
 };
-
-/*
-int count = 1;
-        answer[startY][startX] = count;
-        int i = startY, j = startX;
-        if (size == 1) {
-            gened = 1;
-            return;
-        }
-        while (i >= 0) {
-            std::cout << "0" << std::endl;
-            while (j < size) {
-                std::cout << size << std::endl;
-                if (answer[i][j] == -1) {
-                    _fill(j, i, count);
-                    count++;
-                    startX = j;
-                    startY = i;
-                    if (count == size) {
-                        gened = 1;
-                        return;
-                    }
-                    break;
-                }
-                else {
-                    j++;
-                }
-            }
-            if (j == size) {
-                _remove(startX, startY, count);
-                i = startY;
-                j = startX + 1;
-                startY--;
-                for (int w = 0; w < size; w++) {
-                    if (answer[startY][w] >= size) {
-                        startX = w;
-                        break;
-                    }
-                }
-            }
-            else {
-                i++;
-                j = 0;
-            }
-        }
-        gened = 0;
-*/
 
 class MenuLogic {
 private:
@@ -341,7 +357,7 @@ public:
             _drawKnightAnswer();
             break;
         case EQueenAnswer:
-            //_drawQueenAnswer();
+            _drawQueenAnswer();
             break;
         }
         ClearBackground(BLACK);
