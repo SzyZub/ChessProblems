@@ -216,7 +216,7 @@ public:
             }
             for (int x = 0; x < size; x++) {
                 if (answer[temp][x] >= size) {
-                    _remove(x, temp, count);
+                    _remove(temp, x, count);
                     j = x + 1;
                     i = temp;
                     }
@@ -225,16 +225,14 @@ public:
         }
         else {
             count = 1;
-            _fill(startX, startY, count);
+            _fill(startY, startX, count);
             i = (startY + 1) % size;
             j = 0;
         }
         while(1) {
             while(1) {
-                std::cout << i << " " << j << std::endl;
-                _printSol();
                 if (answer[i][j] == -1) {
-                    _fill(j, i, count);
+                    _fill(i, j, count);
                     if (count == size + 1) {
                         gened = 1;
                         return;
@@ -246,7 +244,7 @@ public:
                 else if (j >= size - 1) {
                     for (int b = 0; b < size; b++) {
                         if (answer[i - 1 >= 0 ? i - 1 : size - 1][b] >= size) {
-                            _remove(b, i - 1, count);                         
+                            _remove(i - 1 >= 0 ? i - 1 : size - 1, b, count);                         
                             if (count == 1) {
                                 gened = 0;
                                 return;
@@ -270,7 +268,7 @@ public:
             }
         }
     }
-    void _fill(int nx, int ny, int &count) {
+    void _fill(int ny, int nx, int &count) {
         answer[ny][nx] = answer[ny][nx] + size + count;
         for (int i = 0; i < size; i++) {
             answer[ny][i]++;
@@ -290,7 +288,7 @@ public:
         }
         count++;
     }
-    void _remove(int nx, int ny, int& count) {
+    void _remove(int ny, int nx, int& count) {
         answer[ny][nx] = answer[ny][nx] - size - count + 1;
         for (int i = 0; i < size; i++) {
             answer[ny][i]--;
@@ -438,7 +436,6 @@ public:
         genQ = GeneratorQ(size);
         int x = row - 1, y = col - 1;
         genQ._generate(x, y);
-        genQ._printSol();
         flag = EQueenAnswer;
     }
     void _drawKnightAnswer() {
@@ -496,7 +493,7 @@ public:
                     else {
                         DrawRectangle(x + 80 * j, y + 80 * i, side, side, BLUE);
                     }
-                    if (genQ.answer[j][i] < size) {
+                    if (genQ.answer[j][i] > size) {
                         DrawText("Q", x + 80 * j + (80 - MeasureText("Q", FONTDEF)) / 2, y + 80 * i + (80 - FONTDEF) / 2, FONTDEF, BLACK);
                     }     
                 }
